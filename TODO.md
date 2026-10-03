@@ -1,8 +1,7 @@
 # Poczta Polska — still to do
 
-- [ ] Install it in a real Home Assistant and track one real parcel through at
-      least two status changes; this is what moves `delivery_window` out of
-      `PENDING_CAPABILITIES`
+- [ ] Follow a parcel that is still on its way, to see whether an expected
+      delivery time ever appears; this is what moves `delivery_window` out of
+      `PENDING_CAPABILITIES` (#2)
 - [ ] Confirm the event-time timezone (read as Europe/Warsaw) against a real parcel
 - [ ] Outgoing parcels (user-declared per code), as for other account-less carriers
-- [ ] Register `poczta_polska` with the aggregator so its events get picked up

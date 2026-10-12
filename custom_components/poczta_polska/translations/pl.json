@@ -1,0 +1,152 @@
+{
+  "title": "Poczta Polska",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skonfiguruj Poczta Polska",
+        "description": "Śledzenie Poczta Polska nie wymaga konta ani kodu pocztowego — hub jest tworzony od razu. Paczki dodajesz później przez opcje integracji lub usługę `poczta_polska.track_parcel`."
+      }
+    },
+    "abort": {
+      "already_configured": "Poczta Polska jest już skonfigurowane."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje Poczta Polska",
+        "menu_options": {
+          "parcels": "Przesyłki",
+          "settings": "Ustawienia"
+        },
+        "sections": {
+          "parcels": {
+            "name": "Paczki",
+            "data": {
+              "add": "Dodaj paczkę",
+              "remove": "Usuń paczki"
+            },
+            "data_description": {
+              "add": "Wprowadź kod śledzenia Poczta Polska, aby zacząć śledzić paczkę. Znajdziesz go na potwierdzeniu nadania lub awizo."
+            }
+          },
+          "delivered": {
+            "name": "Doręczone przesyłki",
+            "data": {
+              "delivered_filter_type": "Filtruj według",
+              "delivered_filter_amount": "Liczba"
+            },
+            "data_description": {
+              "delivered_filter_type": "Pokaż doręczone przesyłki z ostatnich X dni lub ogranicz do X najnowszych.",
+              "delivered_filter_amount": "Liczba dni lub przesyłek do pokazania."
+            }
+          },
+          "history": {
+            "name": "Historia przesyłki",
+            "data": {
+              "include_history": "Uwzględnij historię statusów"
+            },
+            "data_description": {
+              "include_history": "Dodaje do każdej przesyłki atrybut historii z każdą aktualizacją statusu (znacznik czasu, status, oryginalny tekst). Domyślnie wyłączone."
+            }
+          }
+        }
+      },
+      "parcels": {
+        "title": "Śledzone przesyłki",
+        "data": {
+          "tracking_codes": "Numery przesyłek"
+        }
+      },
+      "settings": {
+        "title": "Ustawienia",
+        "data": {
+          "delivered_filter_type": "Doręczone przesyłki: filtruj według",
+          "delivered_filter_amount": "Dostarczone przesyłki: liczba",
+          "include_history": "Uwzględnij historię statusu"
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "To nie wygląda na kod śledzenia Poczta Polska.",
+      "already_tracked": "Ta paczka jest już śledzona."
+    }
+  },
+  "selector": {
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dni",
+        "parcels": "Liczba przesyłek"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Śledź przesyłkę",
+      "description": "Rozpoczyna śledzenie paczki na podstawie jej kodu śledzenia Poczta Polska.",
+      "fields": {
+        "tracking_code": {
+          "name": "Numer przesyłki",
+          "description": "Kod śledzenia Poczta Polska."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Przestań śledzić przesyłkę",
+      "description": "Zatrzymuje śledzenie paczki na podstawie jej kodu śledzenia Poczta Polska.",
+      "fields": {
+        "tracking_code": {
+          "name": "Numer przesyłki",
+          "description": "Kod śledzenia Poczta Polska, który ma przestać być śledzony."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Przesyłka została zarejestrowana",
+      "parcel_status_changed": "Status paczki się zmienił",
+      "parcel_delivered": "Przesyłka została doręczona",
+      "parcel_delivery_time_changed": "Przewidywany czas dostawy paczki się zmienił"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Odśwież"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Dostawy"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Nadchodzące przesyłki",
+        "unit_of_measurement": "przesyłki"
+      },
+      "next_delivery": {
+        "name": "Następna dostawa"
+      },
+      "en_route_to_pickup_point": {
+        "name": "W drodze do punktu odbioru",
+        "unit_of_measurement": "przesyłki"
+      },
+      "awaiting_pickup": {
+        "name": "Oczekuje na odbiór",
+        "unit_of_measurement": "przesyłki"
+      },
+      "delivered_parcels": {
+        "name": "Doręczone przesyłki",
+        "unit_of_measurement": "przesyłki"
+      },
+      "last_update": {
+        "name": "Ostatnia udana aktualizacja"
+      },
+      "parcel": {
+        "name": "Przesyłka {barcode}"
+      }
+    }
+  }
+}

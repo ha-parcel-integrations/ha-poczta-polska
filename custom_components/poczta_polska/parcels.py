@@ -35,6 +35,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# Built once at import: constructing a ZoneInfo reads the tz file from disk.
+_CARRIER_TZ = ZoneInfo(CARRIER_TIMEZONE)
+
 # Where users report a status we do not map yet. Rewritten by the bootstrap
 # script; it must point at the carrier's own repo so the log line is
 # copy-pasteable straight into a new issue.
@@ -167,7 +170,7 @@ def _carrier_datetime(value: Any) -> datetime | None:
         _warn_once_timestamp()
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=ZoneInfo(CARRIER_TIMEZONE))
+        parsed = parsed.replace(tzinfo=_CARRIER_TZ)
     return parsed
 
 

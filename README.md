@@ -44,7 +44,7 @@ Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) 
 
 ## Requirements
 
-- Home Assistant 2024.12 or newer
+- Home Assistant 2025.12 or newer
 - A Poczta Polska parcel and its tracking code (a 20-digit number, `PX` plus
   10 digits, or an international `…PL` code), from the shipping confirmation
   or the notification card — no account needed

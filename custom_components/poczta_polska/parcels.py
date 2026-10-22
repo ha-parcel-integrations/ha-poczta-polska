@@ -211,15 +211,13 @@ def usable_events(raw: dict) -> list[dict]:
         for event in events or []
         if isinstance(event, dict) and not event.get("canceled")
     ]
-    times = [_carrier_datetime(event.get("time")) for event in usable]
-    if any(time is None for time in times):
-        return usable
-    return [
-        event
-        for _, event in sorted(
-            zip(times, usable, strict=True), key=lambda pair: pair[0]
-        )
-    ]
+    timed: list[tuple[datetime, dict]] = []
+    for event in usable:
+        moment = _carrier_datetime(event.get("time"))
+        if moment is None:
+            return usable
+        timed.append((moment, event))
+    return [event for _, event in sorted(timed, key=lambda pair: pair[0])]
 
 
 def build_history(

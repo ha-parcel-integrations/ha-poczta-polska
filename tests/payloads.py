@@ -7,6 +7,7 @@ Keep them in one module rather than inline in each test — when the payload
 shape turns out to be different from what was assumed, there is then exactly
 one place to fix.
 """
+
 from __future__ import annotations
 
 ACTIVE_CODE = "PX9999999999"
@@ -26,7 +27,9 @@ _STATE = {
 }
 
 
-def event(code: str, time: str, *, finished: bool = False, canceled: bool = False) -> dict:
+def event(
+    code: str, time: str, *, finished: bool = False, canceled: bool = False
+) -> dict:
     """One entry of the carrier's own event timeline."""
     state_code, name = _STATE.get(code, ("TR", f"Scan {code}"))
     return {
@@ -52,7 +55,10 @@ def record(code: str, events: list[dict], *, finished: bool = False) -> dict:
             "dispatchPostOffice": {"code": "000000", "name": "Placeholder Post Office"},
             "recipientCountryCode": "PL",
             "recipientCountryName": "Poland",
-            "recipientPostOffice": {"code": "000001", "name": "Placeholder Post Office"},
+            "recipientPostOffice": {
+                "code": "000001",
+                "name": "Placeholder Post Office",
+            },
             "typeOfMailCode": "PX",
             "typeOfMailName": "Parcel",
             "format": "M",

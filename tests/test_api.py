@@ -1,4 +1,6 @@
 """Tests for the Poczta Polska API client."""
+
+import asyncio
 import json
 import logging
 from unittest.mock import AsyncMock, MagicMock
@@ -17,13 +19,7 @@ from custom_components.poczta_polska.const import (
     TRACKING_API_URL,
 )
 
-from .payloads import (
-    ACTIVE_CODE,
-    active_sample,
-    event,
-    not_found_sample,
-    record,
-)
+from .payloads import ACTIVE_CODE, active_sample, event, not_found_sample, record
 
 CODE = ACTIVE_CODE
 # A made-up stand-in; the real value is never written down anywhere.
@@ -80,7 +76,9 @@ async def test_get_parcel_sends_the_lookup_with_the_page_key():
 
 
 async def test_key_is_read_once_and_reused():
-    session = _session([_response(200, active_sample()), _response(200, active_sample())])
+    session = _session(
+        [_response(200, active_sample()), _response(200, active_sample())]
+    )
     client = PocztaPolskaApiClient(session)
     await client.async_get_parcel(CODE)
     await client.async_get_parcel(CODE)
@@ -132,7 +130,6 @@ async def test_key_never_reaches_the_log(caplog):
 
 async def test_concurrent_401s_share_one_page_read():
     """A stale key hit by every parcel of a poll must cost a single page read."""
-    import asyncio
 
     def post(url, *, json, headers, allow_redirects):
         ctx = _response(200 if headers["API_KEY"] == NEW_KEY else 401, active_sample())
@@ -277,7 +274,10 @@ async def test_cancelled_events_stay_in_the_returned_record():
     """raw is never trimmed; ignoring cancelled scans is the normaliser's job."""
     body = record(
         CODE,
-        [event("P_PZL", "2026-04-28T15:52:17"), event("P_D", "2026-04-29T10:00:00", canceled=True)],
+        [
+            event("P_PZL", "2026-04-28T15:52:17"),
+            event("P_D", "2026-04-29T10:00:00", canceled=True),
+        ],
     )
     session = _session([_response(200, body)])
     parcel = await PocztaPolskaApiClient(session).async_get_parcel(CODE)

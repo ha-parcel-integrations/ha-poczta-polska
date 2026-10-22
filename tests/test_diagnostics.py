@@ -1,6 +1,7 @@
 """Tests for Poczta Polska diagnostics."""
-import json
+
 from datetime import timedelta
+import json
 from unittest.mock import MagicMock
 
 from custom_components.poczta_polska.diagnostics import (
@@ -78,7 +79,9 @@ async def test_diagnostics_hide_post_office_blocks_but_keep_the_scan_codes(hass)
     entry.options = {"parcels": []}
     entry.runtime_data.coordinator.current_tier_minutes = 45
     entry.runtime_data.coordinator.update_interval = timedelta(minutes=45)
-    entry.runtime_data.coordinator.data = [{"barcode": "PX1234567890", "raw": delivered_sample()}]
+    entry.runtime_data.coordinator.data = [
+        {"barcode": "PX1234567890", "raw": delivered_sample()}
+    ]
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.delivered_codes = set()
 

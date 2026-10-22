@@ -4,7 +4,8 @@ These need no Home Assistant instance — the whole point of keeping
 ``parcels.py`` free of I/O is that the carrier-specific mapping (the part you
 rewrite per carrier) can be tested as plain functions.
 """
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -44,7 +45,7 @@ from .payloads import (
 
 
 @pytest.mark.parametrize(
-    "code,expected",
+    ("code", "expected"),
     [
         ("P_REJ_KN1", ParcelStatus.REGISTERED),
         ("P_PPDN", ParcelStatus.IN_TRANSIT),
@@ -121,7 +122,7 @@ def test_unmapped_status_warns_only_once(caplog):
 def test_parse_iso_handles_z_naive_and_garbage():
     assert parse_iso("2026-04-29T13:12:42Z").tzinfo is not None
     # A naive value is assumed UTC so mixed lists still sort.
-    assert parse_iso("2026-04-29T13:12:42").tzinfo == timezone.utc
+    assert parse_iso("2026-04-29T13:12:42").tzinfo == UTC
     assert parse_iso("not-a-date") is None
     assert parse_iso(None) is None
 
@@ -130,8 +131,8 @@ def test_event_times_are_read_as_polish_local_time():
     """The wire format has no offset; summer time is UTC+2, winter UTC+1."""
     summer = build_history([event("P_NAD", "2026-07-01T12:00:00")])
     winter = build_history([event("P_NAD", "2026-01-15T12:00:00")])
-    assert parse_iso(summer[0]["timestamp"]) == datetime(2026, 7, 1, 10, tzinfo=timezone.utc)
-    assert parse_iso(winter[0]["timestamp"]) == datetime(2026, 1, 15, 11, tzinfo=timezone.utc)
+    assert parse_iso(summer[0]["timestamp"]) == datetime(2026, 7, 1, 10, tzinfo=UTC)
+    assert parse_iso(winter[0]["timestamp"]) == datetime(2026, 1, 15, 11, tzinfo=UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +177,10 @@ def test_build_history_drops_unparseable_timestamp_and_warns_once(caplog):
 def test_unparseable_delivery_time_leaves_delivered_at_empty():
     raw = record(
         DELIVERED_CODE,
-        [event("P_WD", "2026-04-29T08:00:00"), event("P_D", "not-a-date", finished=True)],
+        [
+            event("P_WD", "2026-04-29T08:00:00"),
+            event("P_D", "not-a-date", finished=True),
+        ],
         finished=True,
     )
     parcel = normalize_parcel(raw)
@@ -187,7 +191,10 @@ def test_unparseable_delivery_time_leaves_delivered_at_empty():
 def test_status_follows_the_newest_scan_even_out_of_wire_order():
     raw = record(
         DELIVERED_CODE,
-        [event("P_D", "2026-04-29T13:00:00", finished=True), event("P_WD", "2026-04-29T08:00:00")],
+        [
+            event("P_D", "2026-04-29T13:00:00", finished=True),
+            event("P_WD", "2026-04-29T08:00:00"),
+        ],
         finished=True,
     )
     parcel = normalize_parcel(raw)
@@ -324,9 +331,12 @@ def test_normalize_pickup_parcel():
     assert parcel["status"] == ParcelStatus.AT_PICKUP_POINT
     assert parcel["pickup"] is True
     assert parcel["pickup_point"] == "Placeholder Post Office"
-    assert normalize_parcel(record(ACTIVE_CODE, pickup_sample()["mailInfo"]["events"][:2]))[
-        "status"
-    ] == ParcelStatus.AT_PICKUP_POINT
+    assert (
+        normalize_parcel(
+            record(ACTIVE_CODE, pickup_sample()["mailInfo"]["events"][:2])
+        )["status"]
+        == ParcelStatus.AT_PICKUP_POINT
+    )
 
 
 def test_scan_code_wins_over_a_lagging_state_label():
@@ -456,7 +466,7 @@ def _entry(filter_type: str, amount: int) -> MockConfigEntry:
 
 
 def _delivered_pair() -> list[dict]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return [
         {"barcode": "RECENT", "delivered_at": (now - timedelta(days=1)).isoformat()},
         {"barcode": "OLD", "delivered_at": (now - timedelta(days=30)).isoformat()},
@@ -480,7 +490,9 @@ def test_delivered_filter_keeps_unparseable_timestamp():
 
 
 def test_pickup_point_names_the_post_office_only_while_at_pickup():
-    assert normalize_parcel(pickup_sample())["pickup_point"] == "Placeholder Post Office"
+    assert (
+        normalize_parcel(pickup_sample())["pickup_point"] == "Placeholder Post Office"
+    )
     assert normalize_parcel(active_sample())["pickup_point"] is None
     assert normalize_parcel(delivered_sample())["pickup_point"] is None
 

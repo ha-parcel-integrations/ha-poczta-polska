@@ -1,4 +1,5 @@
 """Calendar platform for the Poczta Polska parcel tracker integration."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -20,17 +21,20 @@ PARALLEL_UPDATES = 0
 _DEFAULT_EVENT_DURATION = timedelta(hours=1)
 
 
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: PocztaPolskaConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Poczta Polska deliveries calendar from a config entry."""
-    async_add_entities([PocztaPolskaDeliveriesCalendar(entry.runtime_data.coordinator, entry)])
+    async_add_entities(
+        [PocztaPolskaDeliveriesCalendar(entry.runtime_data.coordinator, entry)]
+    )
 
 
-class PocztaPolskaDeliveriesCalendar(CoordinatorEntity[PocztaPolskaCoordinator], CalendarEntity):
+class PocztaPolskaDeliveriesCalendar(
+    CoordinatorEntity[PocztaPolskaCoordinator], CalendarEntity
+):
     """A read-only calendar of expected Poczta Polska deliveries.
 
     Each active tracked parcel with a known delivery moment becomes an event.
@@ -42,7 +46,9 @@ class PocztaPolskaDeliveriesCalendar(CoordinatorEntity[PocztaPolskaCoordinator],
     _attr_translation_key = "deliveries"
     _attr_attribution = ATTRIBUTION
 
-    def __init__(self, coordinator: PocztaPolskaCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: PocztaPolskaCoordinator, entry: ConfigEntry
+    ) -> None:
         """Initialize the calendar."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_deliveries"
@@ -60,7 +66,9 @@ class PocztaPolskaDeliveriesCalendar(CoordinatorEntity[PocztaPolskaCoordinator],
 
             barcode = parcel.get("barcode") or ""
             sender = parcel.get("sender")
-            summary = sender or (f"Parcel {barcode}" if barcode else "Poczta Polska parcel")
+            summary = sender or (
+                f"Parcel {barcode}" if barcode else "Poczta Polska parcel"
+            )
             description_parts = [
                 f"Barcode: {barcode}" if barcode else None,
                 f"Status: {parcel.get('status')}" if parcel.get("status") else None,

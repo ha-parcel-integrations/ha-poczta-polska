@@ -14,11 +14,12 @@ The coordinator relies on this contract:
 * lets ``aiohttp.ClientError`` propagate untouched — ``DataUpdateCoordinator``
   already wraps those into ``UpdateFailed``.
 """
+
 from __future__ import annotations
 
 import asyncio
-import logging
 from html.parser import HTMLParser
+import logging
 from typing import Any
 
 import aiohttp

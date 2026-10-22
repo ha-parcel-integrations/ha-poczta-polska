@@ -1,4 +1,5 @@
 """Tests for Poczta Polska device triggers."""
+
 from unittest.mock import AsyncMock
 
 from custom_components.poczta_polska.const import DOMAIN

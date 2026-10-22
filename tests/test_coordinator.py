@@ -2,12 +2,20 @@
 
 The parcel mapping itself is covered by ``test_parcels.py``.
 """
+
+import asyncio
 from unittest.mock import AsyncMock, patch
 
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.update_coordinator import UpdateFailed
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.poczta_polska.api import PocztaPolskaApiError
+from custom_components.poczta_polska.api import (
+    PocztaPolskaApiError,
+    PocztaPolskaAuthError,
+)
 from custom_components.poczta_polska.const import (
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
@@ -17,6 +25,7 @@ from custom_components.poczta_polska.const import (
     ParcelStatus,
 )
 from custom_components.poczta_polska.coordinator import PocztaPolskaCoordinator
+from custom_components.poczta_polska.parcels import normalize_parcel
 
 from .payloads import ACTIVE_CODE, DELIVERED_CODE, active_sample, delivered_sample
 
@@ -95,8 +104,6 @@ async def test_update_keeps_cached_payload_on_error(hass):
 
 
 async def test_update_raises_when_every_parcel_fails(hass):
-    from homeassistant.helpers.update_coordinator import UpdateFailed
-
     entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
     entry.add_to_hass(hass)
     client = AsyncMock()
@@ -167,8 +174,8 @@ async def test_delivered_code_skipped_from_fetch(hass):
     )
     entry.add_to_hass(hass)
     client = AsyncMock()
-    client.async_get_parcel.side_effect = (
-        lambda code: active_sample(code) if code == ACTIVE_CODE else delivered_sample()
+    client.async_get_parcel.side_effect = lambda code: (
+        active_sample(code) if code == ACTIVE_CODE else delivered_sample()
     )
     coordinator = PocztaPolskaCoordinator(hass, client, entry)
 
@@ -204,8 +211,6 @@ async def test_delivered_code_forgotten_when_untracked(hass):
 
 async def test_update_fetches_parcels_concurrently(hass):
     """All tracked parcels go out in one gather, not one-by-one."""
-    import asyncio
-
     entry = _entry_with(
         [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
     )
@@ -277,8 +282,6 @@ async def test_first_refresh_fires_nothing(hass):
 
 
 async def test_event_carries_device_id(hass):
-    from homeassistant.helpers import device_registry as dr
-
     entry = _entry_with([{CONF_TRACKING_CODE: ACTIVE_CODE}])
     entry.add_to_hass(hass)
     device = dr.async_get(hass).async_get_or_create(
@@ -289,9 +292,7 @@ async def test_event_carries_device_id(hass):
     coordinator = PocztaPolskaCoordinator(hass, client, entry)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e))
 
     client.async_get_parcel.return_value = _in_transit()
     await coordinator._async_update_data()
@@ -309,9 +310,7 @@ async def test_fires_status_changed_event(hass):
     coordinator = PocztaPolskaCoordinator(hass, client, entry)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e))
 
     client.async_get_parcel.return_value = _in_transit()
     await coordinator._async_update_data()  # first refresh: suppressed
@@ -419,7 +418,6 @@ def _window_injected(window: dict):
     The delivery-time event machinery is generic, so it is exercised by
     layering a window on top of the real normaliser's output.
     """
-    from custom_components.poczta_polska.parcels import normalize_parcel
 
     def _normalize(raw, *, include_history=False):
         parcel = normalize_parcel(raw, include_history=include_history)
@@ -481,11 +479,6 @@ async def test_losing_the_eta_is_silent(hass):
 
 async def test_rejected_widget_key_fails_the_poll_without_reauth(hass):
     """There is no user credential to renew, so this is an outage, not a reauth."""
-    from homeassistant.exceptions import ConfigEntryAuthFailed
-    from homeassistant.helpers.update_coordinator import UpdateFailed
-
-    from custom_components.poczta_polska.api import PocztaPolskaAuthError
-
     entry = _entry_with([{CONF_TRACKING_CODE: ACTIVE_CODE}])
     entry.add_to_hass(hass)
     client = AsyncMock()

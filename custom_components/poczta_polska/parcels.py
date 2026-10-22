@@ -12,10 +12,11 @@ timestamp parsing, the history builder, the sort contract, the delivered
 filter, the one-shot warning for unmapped statuses — is suite-wide machinery
 and should be left alone.
 """
+
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import logging
-from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
@@ -146,11 +147,11 @@ def parse_iso(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(str(value))
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -213,7 +214,12 @@ def usable_events(raw: dict) -> list[dict]:
     times = [_carrier_datetime(event.get("time")) for event in usable]
     if any(time is None for time in times):
         return usable
-    return [event for _, event in sorted(zip(times, usable), key=lambda pair: pair[0])]
+    return [
+        event
+        for _, event in sorted(
+            zip(times, usable, strict=True), key=lambda pair: pair[0]
+        )
+    ]
 
 
 def build_history(
@@ -271,7 +277,9 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     status = map_parcel_status(latest_code)
     # A returned parcel the carrier closes is finished but never reached the
     # recipient; counting it delivered would also stop it from being fetched.
-    finished = mail_info.get("finished") is True and status is not ParcelStatus.RETURNING
+    finished = (
+        mail_info.get("finished") is True and status is not ParcelStatus.RETURNING
+    )
     delivered = finished or status is ParcelStatus.DELIVERED
     if delivered and status is not ParcelStatus.DELIVERED:
         key = f"finished:{latest_code}"
@@ -351,14 +359,12 @@ def apply_delivered_filter(parcels: list[dict], entry: ConfigEntry) -> list[dict
     shows.
     """
     options = entry.options
-    filter_type = options.get(
-        CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE
-    )
+    filter_type = options.get(CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE)
     amount = int(
         options.get(CONF_DELIVERED_FILTER_AMOUNT, DEFAULT_DELIVERED_FILTER_AMOUNT)
     )
     if filter_type == "days":
-        cutoff = datetime.now(timezone.utc) - timedelta(days=amount)
+        cutoff = datetime.now(UTC) - timedelta(days=amount)
         return [
             parcel
             for parcel in parcels

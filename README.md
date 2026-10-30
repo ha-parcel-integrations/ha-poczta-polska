@@ -118,7 +118,9 @@ Standard HA removal applies: **Settings → Devices & Services → Poczta Polska
 | `sensor.poczta_polska_incoming_parcels` | Number of active tracked parcels, full list under the `parcels` attribute |
 | `sensor.poczta_polska_parcel_<code>` | One per tracked parcel; state is the canonical status, attributes carry the full normalised parcel |
 | `sensor.poczta_polska_next_delivery` | Earliest expected delivery moment across all active parcels |
+| `sensor.poczta_polska_awaiting_pickup` | Incoming parcels that are ready to collect at a pickup point |
 | `sensor.poczta_polska_delivered_parcels` | Recently delivered parcels (see the retention option) |
+| `calendar.poczta_polska_deliveries` | Read-only calendar of expected deliveries, no extra API calls |
 | `sensor.poczta_polska_last_successful_update` | Diagnostic: when Poczta Polska was last polled successfully |
 
 A delivered parcel moves from its per-parcel sensor to the delivered sensor automatically.

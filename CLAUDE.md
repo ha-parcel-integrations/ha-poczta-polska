@@ -35,10 +35,11 @@ you act in one of these areas:
   summary+diagnostic sensors. Add a new non-parcel sensor's unique_id to the set.
 - **Per-parcel sensors are removed by the summary sensor** via
   `entity_registry.async_remove` (self-removal races and leaves ghosts).
-- **The optional pickup-point summaries are a pair.** A carrier that can tell
-  a parcel is destined for a pickup point exposes
-  `en_route_to_pickup_point` for `pickup is true` before it arrives; one that
-  can reach `ParcelStatus.AT_PICKUP_POINT` also exposes `awaiting_pickup`.
+- **The pickup-point summaries are a pair.** A carrier that can deliver to a
+  pickup point or locker exposes both `en_route_to_pickup_point` and
+  `awaiting_pickup`, even before a real parcel has shown the status or flag
+  (they read 0 until then; record it in `PENDING_*`). A carrier without pickup
+  points exposes neither and keeps `pickup` constantly False.
   See *Parcel contract* in `CONVENTIONS.md`. Say "pickup point", not
   "ServicePoint"/"parcel shop"/"locker", for the generic concept; the
   example carrier demonstrates both canonical sensors.
@@ -58,15 +59,27 @@ you act in one of these areas:
   a reauth flow would have nothing to ask for.
 - Fields that are `None` on purpose: `sender`, `receiver`, `dimensions` (the
   payload has none; `format` is a size class, not dimensions), and, awaiting
-  data, `delivery_window` (no ETA seen). `pickup_point` is the latest event's
-  post-office name while at the pickup point; on real parcels that block is
-  always a public office name, never a street address. `url` is the public
-  tracking page with the code as its bare query string.
+  data, `delivery_window` (no ETA seen); `planned_*` still runs through
+  `planned_window` / `planned_for_status` so an ETA would follow the contract.
+  `pickup` is true once the parcel has reached a pickup-point scan (`P_A`,
+  `P_KWD`, `P_PA`) and stays true after collection or a return, because the
+  payload has no structured destination field. `pickup_point` is the
+  post-office name of the newest pickup-point scan whenever `pickup` is true
+  (never a later scan's office); on real parcels that block is always a public
+  office name, never a street address. Known limitation: `pickup` is sticky, so
+  a door redelivery after a post-office notice leaves it true. Both pickup sensors exist; a home
+  delivery rerouted to a pickup point only shows as en route once it arrives,
+  since nothing before the scan says so. `url` is the public tracking page
+  with the code as its bare query string.
 - Status comes from the newest scan, never from the coarser state label, which
   can lag after a failed delivery. Events are sorted by time rather than
-  trusted in wire order. A parcel the carrier closes while returning is **not**
-  delivered: counting it would stop it being fetched and skip the delivered
-  event. Customs is `in_transit`; any unlisted status reports `unknown` with a
+  trusted in wire order. The carrier's closed flag is folded into the status: a
+  closed parcel whose newest scan is not a delivery or return (a pickup-point
+  scan included, as collection) is `delivered` with a one-shot warning, and then has no `delivered_at`
+  (only a delivery scan gives one). A closed return stays `returning` with
+  `delivered` false: the carrier has no back-at-sender scan, only a closed
+  flag on a return, which is no evidence of delivery at the sender, so a
+  return never fires the delivered event. Customs is `in_transit`; any unlisted status reports `unknown` with a
   one-shot warning.
 - "No data" (shown as an unknown placeholder, not an error): unknown number,
   grouped consignment, or a record whose events are all cancelled or absent.

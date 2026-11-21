@@ -17,6 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from . import PocztaPolskaConfigEntry
 from .const import DOMAIN, ParcelStatus
@@ -221,6 +222,9 @@ class PocztaPolskaNextDeliverySensor(
                         "Could not parse delivery moment: %s", parcel["planned_from"]
                     )
                 continue
+            end = parse_iso(parcel.get("planned_to")) or moment
+            if end < dt_util.now():
+                continue
             result.append((moment, parcel))
         return result
 
@@ -286,7 +290,8 @@ class PocztaPolskaEnRouteToPickupPointSensor(_PocztaPolskaPickupListSensor):
             parcel
             for parcel in (self.coordinator.data or [])
             if parcel.get("pickup")
-            and parcel.get("status") != ParcelStatus.AT_PICKUP_POINT
+            and parcel.get("status")
+            not in (ParcelStatus.AT_PICKUP_POINT, ParcelStatus.RETURNING)
         ]
 
 

@@ -70,13 +70,23 @@ def test_parcel_sensor_missing_barcode():
 def test_next_delivery_picks_earliest():
     coordinator = _coordinator(
         [
-            _parcel("A", planned_from="2026-05-02T10:00:00Z"),
-            _parcel("B", planned_from="2026-05-01T10:00:00Z"),
+            _parcel("A", planned_from="2099-05-02T10:00:00Z"),
+            _parcel("B", planned_from="2099-05-01T10:00:00Z"),
         ]
     )
     sensor = PocztaPolskaNextDeliverySensor(coordinator, _entry())
-    assert sensor.native_value == datetime(2026, 5, 1, 10, 0, tzinfo=UTC)
+    assert sensor.native_value == datetime(2099, 5, 1, 10, 0, tzinfo=UTC)
     assert sensor.extra_state_attributes["barcode"] == "B"
+
+
+def test_next_delivery_skips_a_window_that_has_ended():
+    ended = _parcel("OLD", planned_from="2020-05-01T10:00:00Z")
+    still_open = _parcel("OPEN", planned_from="2020-05-01T10:00:00Z")
+    still_open["planned_to"] = "2099-05-01T23:59:59Z"
+    sensor = PocztaPolskaNextDeliverySensor(_coordinator([ended]), _entry())
+    assert sensor.native_value is None
+    sensor = PocztaPolskaNextDeliverySensor(_coordinator([ended, still_open]), _entry())
+    assert sensor.extra_state_attributes["barcode"] == "OPEN"
 
 
 def test_next_delivery_none_without_moments():
@@ -89,7 +99,7 @@ def test_next_delivery_skips_unparseable_moment():
     coordinator = _coordinator(
         [
             _parcel("A", planned_from="not-a-date"),
-            _parcel("B", planned_from="2026-05-01T10:00:00Z"),
+            _parcel("B", planned_from="2099-05-01T10:00:00Z"),
         ]
     )
     sensor = PocztaPolskaNextDeliverySensor(coordinator, _entry())
@@ -114,6 +124,12 @@ def test_en_route_and_awaiting_pickup_split():
     ]
     assert en_route.native_value == 1
     assert awaiting.native_value == 1
+
+
+def test_returning_parcel_is_not_en_route_to_a_pickup_point():
+    parcels = [_parcel("BACK", pickup=True, status=ParcelStatus.RETURNING)]
+    sensor = PocztaPolskaEnRouteToPickupPointSensor(_coordinator(parcels), _entry())
+    assert sensor.native_value == 0
 
 
 def test_pickup_sensors_zero_without_data():

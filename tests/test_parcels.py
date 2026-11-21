@@ -380,7 +380,8 @@ def test_finished_flag_marks_delivered_and_warns_when_the_scan_disagrees(caplog)
     raw = record(ACTIVE_CODE, [event("P_PZL", "2026-04-29T09:00:00")], finished=True)
     parcel = normalize_parcel(raw)
     assert parcel["delivered"] is True
-    assert parcel["status"] == ParcelStatus.IN_TRANSIT
+    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["delivered_at"] is None
     assert "marks a parcel finished" in caplog.text
     assert "issues/new" in caplog.text
     normalize_parcel(raw)

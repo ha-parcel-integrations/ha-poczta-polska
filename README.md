@@ -38,6 +38,7 @@ A custom Home Assistant integration that tracks [Poczta Polska](https://www.pocz
 - Summary sensors: incoming parcels, next delivery, recently delivered parcels
 - Read-only **Deliveries** calendar (stays empty until Poczta Polska reports an expected delivery time)
 - `poczta_polska.track_parcel` / `poczta_polska.untrack_parcel` services, so a dashboard button can add a parcel
+- Optional per-parcel `contents` note (what is in it), set with `poczta_polska.update_contents` or on `track_parcel`; it titles the calendar event and shows on the next-delivery sensor
 - Events + device triggers for no-code automations (parcel registered, status changed, delivered, delivery time changed)
 - Opt-in per-parcel status history
 - Manual refresh button and a diagnostic last-update sensor
@@ -160,8 +161,11 @@ Every payload is the full normalised parcel plus the hub's `device_id`. Events a
 
 | Service | Fields | Description |
 |---|---|---|
-| `poczta_polska.track_parcel` | `tracking_code` | Start tracking a parcel |
+| `poczta_polska.track_parcel` | `tracking_code`, `contents` (optional) | Start tracking a parcel |
 | `poczta_polska.untrack_parcel` | `tracking_code` | Stop tracking a parcel |
+| `poczta_polska.update_contents` | `tracking_code`, `contents` | Set, replace or clear (empty text) a note on what is in a parcel |
+
+The `contents` text is stored locally, never sent to Poczta Polska, and fills the parcel's `contents` field; it titles the parcel's calendar event and shows on the next-delivery sensor.
 
 ## Examples
 

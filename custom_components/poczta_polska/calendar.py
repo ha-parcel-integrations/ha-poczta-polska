@@ -87,9 +87,12 @@ class PocztaPolskaDeliveriesCalendar(
                 event_start, event_end = days
 
             barcode = parcel.get("barcode") or ""
-            sender = parcel.get("sender")
-            summary = sender or (
-                f"Parcel {barcode}" if barcode else "Poczta Polska parcel"
+            # Contents say what is arriving; the sender is the fallback when the
+            # parcel has none.
+            summary = (
+                parcel.get("contents")
+                or parcel.get("sender")
+                or (f"Parcel {barcode}" if barcode else "Poczta Polska parcel")
             )
             description_parts = [
                 f"Barcode: {barcode}" if barcode else None,

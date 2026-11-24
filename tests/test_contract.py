@@ -26,6 +26,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -97,6 +98,7 @@ def parcel(request) -> dict:
 
 def test_keys_and_order(parcel):
     assert list(parcel) == CANONICAL_KEYS
+    assert parcel["contents"] is None
 
 
 def test_delivered_follows_status(parcel):

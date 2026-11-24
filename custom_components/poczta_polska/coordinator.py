@@ -34,6 +34,7 @@ from .const import (
     STAGGER_MINUTES,
     ParcelStatus,
 )
+from .contents import ContentsStore
 from .parcels import apply_delivered_filter, normalize_parcel, sort_parcels_by_ts
 
 _LOGGER = logging.getLogger(__name__)
@@ -150,6 +151,7 @@ class PocztaPolskaCoordinator(DataUpdateCoordinator[list[dict]]):
             update_interval=timedelta(minutes=HOT_INTERVAL_MINUTES),
         )
         self._client = client
+        self.contents_store = ContentsStore(hass, entry.entry_id)
         self.delivered: list[dict] = []
         # tracking_code -> last successful raw payload, so a transient fetch
         # failure or a not-found blip keeps the parcel visible instead of
@@ -182,6 +184,13 @@ class PocztaPolskaCoordinator(DataUpdateCoordinator[list[dict]]):
         self._cached_device_id: str | None = None
         # Timestamp of the last successful poll (diagnostic sensor).
         self.last_success_time: datetime | None = None
+
+    def _apply_contents(self, parcel: dict, code: object) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        user_value = self.contents_store.get(code)
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
 
     @property
     def current_tier_minutes(self) -> int | None:
@@ -327,7 +336,12 @@ class PocztaPolskaCoordinator(DataUpdateCoordinator[list[dict]]):
 
         include_history = self._include_history
         entries = [
-            (code, normalize_parcel(raw, include_history=include_history))
+            (
+                code,
+                self._apply_contents(
+                    normalize_parcel(raw, include_history=include_history), code
+                ),
+            )
             for code, raw in raws_by_code.items()
         ]
         active = [parcel for _, parcel in entries if not parcel["delivered"]]

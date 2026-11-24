@@ -229,6 +229,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -247,7 +248,9 @@ CANONICAL_KEYS = [
 
 def test_normalize_publishes_exactly_the_canonical_keys():
     """The aggregator and cross-carrier dashboards depend on this key set."""
-    assert list(normalize_parcel(delivered_sample())) == CANONICAL_KEYS
+    parcel = normalize_parcel(delivered_sample())
+    assert list(parcel) == CANONICAL_KEYS
+    assert parcel["contents"] is None
 
 
 def test_capabilities_are_known_values():

@@ -79,6 +79,13 @@ def test_next_delivery_picks_earliest():
     assert sensor.extra_state_attributes["barcode"] == "B"
 
 
+def test_next_delivery_carries_the_contents():
+    parcel = _parcel("A", planned_from="2099-05-01T10:00:00Z")
+    parcel["contents"] = "Running shoes"
+    sensor = PocztaPolskaNextDeliverySensor(_coordinator([parcel]), _entry())
+    assert sensor.extra_state_attributes["contents"] == "Running shoes"
+
+
 def test_next_delivery_skips_a_window_that_has_ended():
     ended = _parcel("OLD", planned_from="2020-05-01T10:00:00Z")
     still_open = _parcel("OPEN", planned_from="2020-05-01T10:00:00Z")

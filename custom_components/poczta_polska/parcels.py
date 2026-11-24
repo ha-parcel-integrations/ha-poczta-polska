@@ -398,7 +398,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         status = ParcelStatus.DELIVERED
     delivered = status is ParcelStatus.DELIVERED
 
-    delivered_event = next(
+    delivered_event: dict[str, Any] = next(
         (
             event
             for event in reversed(events)
